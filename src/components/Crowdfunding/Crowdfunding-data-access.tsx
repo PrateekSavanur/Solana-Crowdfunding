@@ -1,6 +1,6 @@
 import { getCrowdfundingProgram, getCrowdfundingProgramId } from '@project/anchor'
 import { useConnection } from '@solana/wallet-adapter-react'
-import { Cluster, Keypair, PublicKey } from '@solana/web3.js'
+import { Cluster, Keypair, PublicKey, SystemProgram } from '@solana/web3.js'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { useMemo } from 'react'
@@ -19,7 +19,7 @@ export function useCrowdfundingProgram() {
 
   const accounts = useQuery({
     queryKey: ['Crowdfunding', 'all', { cluster }],
-    queryFn: () => program.account.Crowdfunding.all(),
+    queryFn: () => program.account.campaign.all(),
   })
 
   const getProgramAccount = useQuery({
@@ -29,8 +29,7 @@ export function useCrowdfundingProgram() {
 
   const initialize = useMutation({
     mutationKey: ['Crowdfunding', 'initialize', { cluster }],
-    mutationFn: (keypair: Keypair) =>
-      program.methods.initialize().accounts({ Crowdfunding: keypair.publicKey }).signers([keypair]).rpc(),
+    mutationFn: () => program.methods.initialize('name', 'description').rpc(),
     onSuccess: (signature) => {
       transactionToast(signature)
       return accounts.refetch()
@@ -54,50 +53,10 @@ export function useCrowdfundingProgramAccount({ account }: { account: PublicKey 
 
   const accountQuery = useQuery({
     queryKey: ['Crowdfunding', 'fetch', { cluster, account }],
-    queryFn: () => program.account.Crowdfunding.fetch(account),
-  })
-
-  const closeMutation = useMutation({
-    mutationKey: ['Crowdfunding', 'close', { cluster, account }],
-    mutationFn: () => program.methods.close().accounts({ Crowdfunding: account }).rpc(),
-    onSuccess: (tx) => {
-      transactionToast(tx)
-      return accounts.refetch()
-    },
-  })
-
-  const decrementMutation = useMutation({
-    mutationKey: ['Crowdfunding', 'decrement', { cluster, account }],
-    mutationFn: () => program.methods.decrement().accounts({ Crowdfunding: account }).rpc(),
-    onSuccess: (tx) => {
-      transactionToast(tx)
-      return accountQuery.refetch()
-    },
-  })
-
-  const incrementMutation = useMutation({
-    mutationKey: ['Crowdfunding', 'increment', { cluster, account }],
-    mutationFn: () => program.methods.increment().accounts({ Crowdfunding: account }).rpc(),
-    onSuccess: (tx) => {
-      transactionToast(tx)
-      return accountQuery.refetch()
-    },
-  })
-
-  const setMutation = useMutation({
-    mutationKey: ['Crowdfunding', 'set', { cluster, account }],
-    mutationFn: (value: number) => program.methods.set(value).accounts({ Crowdfunding: account }).rpc(),
-    onSuccess: (tx) => {
-      transactionToast(tx)
-      return accountQuery.refetch()
-    },
+    queryFn: () => program.account.campaign.fetch(account),
   })
 
   return {
     accountQuery,
-    closeMutation,
-    decrementMutation,
-    incrementMutation,
-    setMutation,
   }
 }
